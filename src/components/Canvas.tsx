@@ -21,16 +21,11 @@ interface NodeProps {
   isActive?: boolean;
   onClick?: () => void;
   details?: {
-    compare: string;
-    target: string;
-    branch: string;
-    output: string;
-    recommend: string;
+    [key: string]: string;
   };
-  hasBranches?: boolean;
 }
 
-const FlowNode = ({ id, label, icon, status, isActive, onClick, details, hasBranches }: NodeProps) => {
+const FlowNode = ({ id, label, icon, status, isActive, onClick, details }: NodeProps) => {
   return (
     <div className="relative flex flex-col items-center">
       <motion.div 
@@ -59,14 +54,12 @@ const FlowNode = ({ id, label, icon, status, isActive, onClick, details, hasBran
         
         {details && (
           <div className="w-full space-y-2 text-[10px] text-slate-600">
-            <div className="flex justify-between"><span className="text-slate-400">对比：</span><span className="font-medium text-slate-700">{details.compare}</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">目标：</span><span className="font-medium text-slate-700 truncate max-w-[120px] text-right">{details.target}</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">分支：</span><span className="font-medium text-blue-600 bg-blue-50 px-1.5 rounded">{details.branch}</span></div>
-            <div className="flex justify-between"><span className="text-slate-400">输出：</span><span className="font-medium text-slate-700 truncate max-w-[120px] text-right font-mono" title={details.output}>{details.output}</span></div>
-            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between">
-              <span className="text-slate-400">推荐下游：</span>
-              <span className="font-medium text-slate-500">{details.recommend}</span>
-            </div>
+            {Object.entries(details).map(([k, v]) => (
+              <div key={k} className="flex justify-between">
+                <span className="text-slate-400 w-12">{k}:</span>
+                <span className="font-medium text-slate-700 truncate text-right flex-1 bg-slate-50 border border-slate-100 rounded px-1">{v}</span>
+              </div>
+            ))}
           </div>
         )}
 
@@ -78,19 +71,6 @@ const FlowNode = ({ id, label, icon, status, isActive, onClick, details, hasBran
           </div>
         )}
       </motion.div>
-
-      {hasBranches && (
-        <div className="absolute -right-16 top-1/2 -translate-y-1/2 flex flex-col gap-10 w-16 pointer-events-none">
-          <div className="relative flex items-center justify-end">
-            <div className="absolute left-0 w-full h-[1.5px] bg-emerald-400" />
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] px-2.5 py-0.5 rounded-full z-10 -mr-5 font-bold shadow-sm">是</div>
-          </div>
-          <div className="relative flex items-center justify-end">
-            <div className="absolute left-0 w-full h-[1.5px] bg-slate-300" />
-             <div className="bg-white border border-slate-200 text-slate-500 text-[10px] px-2.5 py-0.5 rounded-full z-10 -mr-5 font-bold shadow-sm">否</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -165,36 +145,21 @@ export const Canvas = ({ activeNodeId, config, onNodeClick }: {
             isActive={activeNodeId === "anomaly-detection"}
             onClick={() => onNodeClick("anomaly-detection")}
             details={{
-              compare: config.compareType === 'time_compare' ? '时间对比' : '同类对比',
-              target: getTargetLabel(config.detectionTarget),
-              branch: '是 / 否',
-              output: 'summary + items',
-              recommend: '通知 / 工单 / 循环'
+              '指标': config.metricConfig?.code || '销售额',
+              '粒度': config.targetConfig?.timeRangeConfig?.granularity === 'hour' ? '小时' : config.targetConfig?.timeRangeConfig?.granularity === 'day' ? '日' : config.targetConfig?.timeRangeConfig?.granularity === 'month' ? '月' : '周',
+              '方式': config.compareType === 'time_compare' ? '时间对比' : '同类对比'
             }}
-            hasBranches={true}
           />
         </div>
 
-        <div className="flex flex-col gap-6 pl-4">
-          <div className="flex items-center">
-            <Connection className="text-emerald-400 w-6 drop-shadow-sm" />
-            <FlowNode 
-              id="notify" 
-              label="异常通知节点" 
-              icon={<Bell size={18} />} 
-              onClick={() => {}} 
-            />
-          </div>
-          <div className="flex items-center">
-            <Connection className="w-6" />
-            <FlowNode 
-              id="branch" 
-              label="正常结束节点" 
-              icon={<CircleCheck size={18} />} 
-              onClick={() => {}} 
-            />
-          </div>
-        </div>
+        <Connection />
+        
+        <FlowNode 
+          id="notify" 
+          label="下游处理节点" 
+          icon={<Bell size={18} />} 
+          onClick={() => {}} 
+        />
       </div>
     </div>
   );

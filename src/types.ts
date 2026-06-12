@@ -84,6 +84,11 @@ export interface TargetConfig {
   changeRateThreshold?: string;
   peerDimensionField?: string;
   targetDimensionValue?: string;
+  benchmarkValueMode?: 'fixed_list' | 'variable' | 'expression';
+  benchmarkFixedValues?: string[];
+  benchmarkVariable?: string;
+  benchmarkExpression?: string;
+  includeTargetInBenchmark?: boolean;
   benchmarkDimensionValue?: string;
   benchmarkDimensionCondition?: string;
   timeDimensionField?: string;

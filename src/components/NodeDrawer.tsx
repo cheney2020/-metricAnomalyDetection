@@ -716,7 +716,7 @@ export const NodeDrawer = ({ isOpen, onClose, config, setConfig, onTest }: NodeD
                               ...config.targetConfig, 
                               peerDimensionField: val,
                               targetDimensionValue: config.targetConfig?.targetDimensionValue || `current.${val}`,
-                              benchmarkDimensionValue: config.targetConfig?.benchmarkDimensionValue || `current.${val}`
+                              benchmarkVariable: config.targetConfig?.benchmarkVariable || `context.peer_${val}s`
                             }
                           });
                         }}
@@ -730,107 +730,121 @@ export const NodeDrawer = ({ isOpen, onClose, config, setConfig, onTest }: NodeD
                       </select>
                     </div>
 
-                    {/* 2. 待检测和范围 (同一行展示) / 强调范围条件 */}
-                    {config.detectionTarget === 'target_object' ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-700 block">待检测对象取值</label>
-                          <input 
-                            type="text" 
-                            className="w-full border border-slate-200 rounded-lg p-2 outline-none font-mono text-slate-600 bg-white text-xs shadow-sm focus:border-blue-400"
-                            placeholder="如: current.city_id"
-                            value={config.targetConfig?.targetDimensionValue || `current.${config.targetConfig?.peerDimensionField || 'city_id'}`}
-                            onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, targetDimensionValue: e.target.value}})}
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-700 block">范围对象取值</label>
-                          <input 
-                            type="text" 
-                            className="w-full border border-slate-200 rounded-lg p-2 outline-none font-mono text-slate-600 bg-white text-xs shadow-sm focus:border-blue-400"
-                            placeholder="如: current.city_id"
-                            value={config.targetConfig?.benchmarkDimensionValue || `current.${config.targetConfig?.peerDimensionField || 'city_id'}`}
-                            onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, benchmarkDimensionValue: e.target.value}})}
-                          />
-                        </div>
-                      </div>
-                    ) : (
+                    {/* 2. 待检测对象取值 (Only for target_object) */}
+                    {config.detectionTarget === 'target_object' && (
                       <div className="space-y-1.5">
-                        <div className="flex justify-between items-center">
-                          <label className="text-xs font-bold text-slate-700 block">范围条件 <span className="text-red-500">*</span></label>
-                          <span className="text-[10px] text-blue-600 bg-blue-50 px-1 rounded font-medium">满足同类范围的数据集合</span>
-                        </div>
+                        <label className="text-xs font-bold text-slate-700 block">待检测对象维度取值</label>
                         <input 
                           type="text" 
-                          className="w-full border border-slate-200 rounded-lg p-2 outline-none font-mono text-slate-400 bg-white text-xs shadow-sm focus:border-blue-500"
-                          placeholder="例如: city_id in ('shanghai', 'beijing') 或范围规则"
-                          value={config.targetConfig?.benchmarkDimensionValue || `current.${config.targetConfig?.peerDimensionField || 'city_id'}`}
-                          onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, benchmarkDimensionValue: e.target.value}})}
+                          className="w-full border border-slate-200 rounded-lg p-2 outline-none font-mono text-slate-600 bg-white text-xs shadow-sm focus:border-blue-400"
+                          placeholder="如: current.city_id"
+                          value={config.targetConfig?.targetDimensionValue || `current.${config.targetConfig?.peerDimensionField || 'city_id'}`}
+                          onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, targetDimensionValue: e.target.value}})}
                         />
                       </div>
                     )}
 
-                    {/* 3. 时间维度字段 与 时间粒度 (统一：先选粒度，再配置区间) */}
-                    <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 block">时间维度字段</label>
-                        <select 
-                          className="w-full border border-slate-200 rounded-lg p-2 outline-none font-medium text-slate-600 bg-white text-xs shadow-sm focus:border-blue-400"
-                          value={config.targetConfig?.timeDimensionField || 'biz_date'}
-                          onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, timeDimensionField: e.target.value}})}
-                        >
-                          <option value="biz_date">biz_date (业务日期)</option>
-                          <option value="stat_date">stat_date (统计日期)</option>
-                          <option value="pay_time">pay_time (支付时间)</option>
-                          <option value="created_at">created_at (创建时间)</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 block">时间粒度</label>
-                        <select 
-                          className="w-full border border-slate-200 rounded-lg p-2 outline-none text-xs text-slate-600 bg-white shadow-sm focus:border-blue-400"
-                          value={config.targetConfig?.timeRangeConfig?.granularity || 'day'}
-                          onChange={(e) => {
-                             const gr = e.target.value as any;
-                             const currentConf = config.targetConfig?.timeRangeConfig || { mode: 'preset', preset: 'last_30_days' };
-                             setConfig({
-                               ...config, 
-                               targetConfig: {
-                                 ...config.targetConfig, 
-                                 timeRangeConfig: {
-                                   ...currentConf, 
-                                   granularity: gr
-                                 }
-                               }
-                             });
-                          }}
-                        >
-                           <option value="hour">按小时</option>
-                           <option value="day">按天</option>
-                           <option value="week">按周</option>
-                           <option value="month">按月</option>
-                        </select>
-                      </div>
+                    {/* 3. 范围对象取值范围 */}
+                    <div className="space-y-2">
+                       <label className="text-xs font-bold text-slate-700 block mb-1">范围对象取值范围</label>
+                       <div className="text-[10px] text-slate-500 mb-2">用于定义参与同类对比的对象集合，可输入固定列表、变量数组或表达式。</div>
+                       <select
+                         className="w-full border border-slate-200 rounded-lg p-2 outline-none text-xs text-slate-600 bg-white shadow-sm focus:border-blue-400 mb-2"
+                         value={config.targetConfig?.benchmarkValueMode || 'variable'}
+                         onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, benchmarkValueMode: e.target.value as any}})}
+                       >
+                         <option value="fixed_list">固定值列表</option>
+                         <option value="variable">变量</option>
+                         <option value="expression">自定义表达式</option>
+                       </select>
+
+                       {/* Contextual Input depending on mode */}
+                       {(() => {
+                         const mode = config.targetConfig?.benchmarkValueMode || 'variable';
+                         if (mode === 'fixed_list') {
+                           return (
+                             <input 
+                               type="text" 
+                               className="w-full border border-slate-200 rounded-lg p-2 outline-none font-mono text-slate-600 bg-white text-xs shadow-sm focus:border-blue-400"
+                               placeholder="英文逗号隔开，如: beijing, shanghai, guangzhou"
+                               value={(config.targetConfig?.benchmarkFixedValues || []).join(', ')}
+                               onChange={(e) => {
+                                 const vals = e.target.value.split(',').map(v => v.trim()).filter(v => v);
+                                 setConfig({...config, targetConfig: {...config.targetConfig, benchmarkFixedValues: vals}});
+                               }}
+                             />
+                           );
+                         } else if (mode === 'variable') {
+                           return (
+                             <input 
+                               type="text" 
+                               className="w-full border border-slate-200 rounded-lg p-2 outline-none font-mono text-slate-600 bg-white text-xs shadow-sm focus:border-blue-400"
+                               placeholder="如: current.peer_city_ids"
+                               value={config.targetConfig?.benchmarkVariable || ''}
+                               onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, benchmarkVariable: e.target.value}})}
+                             />
+                           );
+                         } else {
+                           return (
+                             <input 
+                               type="text" 
+                               className="w-full border border-slate-200 rounded-lg p-2 outline-none font-mono text-slate-600 bg-white text-xs shadow-sm focus:border-blue-400"
+                               placeholder="如: region_id = current.region_id AND city_level IN ('一线')"
+                               value={config.targetConfig?.benchmarkExpression || ''}
+                               onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, benchmarkExpression: e.target.value}})}
+                             />
+                           );
+                         }
+                       })()}
+
+                       {/* Expression Preview */}
+                       <div className="bg-slate-50 border border-slate-200 p-2 rounded text-[10px] font-mono text-slate-500 mt-2">
+                         预览: {(() => {
+                           const field = config.targetConfig?.peerDimensionField || 'city_id';
+                           const mode = config.targetConfig?.benchmarkValueMode || 'variable';
+                           if (mode === 'fixed_list') {
+                             const vals = config.targetConfig?.benchmarkFixedValues || [];
+                             if (vals.length === 0) return '尚未配置固定值';
+                             return `${field} IN (${vals.map(v => `'${v}'`).join(', ')})`;
+                           } else if (mode === 'variable') {
+                             const vari = config.targetConfig?.benchmarkVariable;
+                             if (!vari) return '尚未配置变量';
+                             return `${field} IN {${vari}}`;
+                           } else {
+                             return config.targetConfig?.benchmarkExpression || '尚未配置表达式';
+                           }
+                         })()}
+                       </div>
                     </div>
                     
-                    {/* 4. 时间区间 (与时间对比对齐，采用 TimeRangeEditor) */}
-                    <TimeRangeEditor 
-                      label="检测时间区间"
-                      config={config.targetConfig?.timeRangeConfig} 
-                      onChange={(c) => {
-                        const gr = config.targetConfig?.timeRangeConfig?.granularity || 'day';
-                        setConfig({
-                          ...config, 
-                          targetConfig: {
-                            ...config.targetConfig, 
-                            timeRangeConfig: {
-                              ...c,
-                              granularity: gr
-                            }
-                          }
-                        });
-                      }} 
-                    />
+                    {/* 4. 范围对象是否包含待检测对象 (Only for target_object) */}
+                    {config.detectionTarget === 'target_object' && (
+                       <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                         <label className="text-xs font-bold text-slate-700 block mb-2">范围对象是否包含待检测对象</label>
+                         <div className="flex gap-4">
+                           <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                             <input 
+                               type="radio" 
+                               name="includeTarget" 
+                               className="accent-blue-600"
+                               checked={config.targetConfig?.includeTargetInBenchmark === true}
+                               onChange={() => setConfig({...config, targetConfig: {...config.targetConfig, includeTargetInBenchmark: true}})}
+                             />
+                             <span>包含待检测对象</span>
+                           </label>
+                           <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                             <input 
+                               type="radio" 
+                               name="includeTarget" 
+                               className="accent-blue-600"
+                               checked={config.targetConfig?.includeTargetInBenchmark !== true}
+                               onChange={() => setConfig({...config, targetConfig: {...config.targetConfig, includeTargetInBenchmark: false}})}
+                             />
+                             <span>排除待检测对象</span>
+                           </label>
+                         </div>
+                       </div>
+                    )}
                     
                     {/* 5. 分布判断指标 (多选) */}
                     {config.detectionTarget === 'distribution' && (
@@ -874,215 +888,195 @@ export const NodeDrawer = ({ isOpen, onClose, config, setConfig, onTest }: NodeD
                 )}
               </div>
             </div>
-          </div>
-        </Section>
-
-        {/* Section 4: Detection Method */}
-        <Section title="四、检测方法">
-          <div className="space-y-6 pt-1">
-             <div className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">请选择本节点使用的异常判断方式：</div>
-             <div className="grid grid-cols-2 gap-3 pt-1">
-                <button 
-                  onClick={() => setConfig({...config, detectionMethodType: 'algorithm'})}
-                  className={cn(
-                    "flex flex-col text-left p-3.5 rounded-xl border-2 transition-all relative overflow-hidden focus:outline-none",
-                    config.detectionMethodType === 'algorithm' ? "border-blue-500 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
-                  )}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className={cn("w-3 h-3 rounded-full border-2", config.detectionMethodType === 'algorithm' ? "border-blue-500 flex items-center justify-center.shadow-sm" : "border-slate-300")}>
-                      {config.detectionMethodType === 'algorithm' && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />}
-                    </div>
-                    <span className={cn("text-sm font-bold tracking-tight", config.detectionMethodType === 'algorithm' ? "text-blue-900" : "text-slate-700")}>算法检测</span>
+          
+          {/* Section 4 Advanced Config inside Task */}
+          <div className="pt-6 border-t border-slate-100">
+              <details className="group">
+                <summary className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center justify-between cursor-pointer list-none flex-row-reverse w-full">
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px]">4</span> 
+                    高级配置：检测方法
                   </div>
-                  <div className="text-[10px] text-slate-500 leading-relaxed pl-5 mt-1">基于统计、趋势或波动算法自动识别异常。</div>
-                </button>
-                <button 
-                  onClick={() => setConfig({...config, detectionMethodType: 'manual_rule'})}
-                  className={cn(
-                    "flex flex-col text-left p-3.5 rounded-xl border-2 transition-all relative overflow-hidden focus:outline-none",
-                    config.detectionMethodType === 'manual_rule' ? "border-blue-500 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
-                  )}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className={cn("w-3 h-3 rounded-full border-2", config.detectionMethodType === 'manual_rule' ? "border-blue-500 flex items-center justify-center.shadow-sm" : "border-slate-300")}>
-                      {config.detectionMethodType === 'manual_rule' && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />}
-                    </div>
-                    <span className={cn("text-sm font-bold tracking-tight", config.detectionMethodType === 'manual_rule' ? "text-blue-900" : "text-slate-700")}>人工规则检测</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 leading-relaxed pl-5 mt-1">基于业务条件表达式判断，适合明确阈值。</div>
-                </button>
-            </div>
-
-            {config.detectionMethodType === 'algorithm' && (
-              <div className="bg-[#F8FAFC] border border-slate-200 rounded-xl p-4 shadow-inner space-y-4 animate-in fade-in slide-in-from-top-2">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-2">算法选择方式：</label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input type="radio" checked={config.algorithmSelectionMode === 'system_recommended'} onChange={() => setConfig({...config, algorithmSelectionMode: 'system_recommended'})} className="accent-blue-600" />
-                      <span className="text-xs text-slate-700 font-medium">系统推荐</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input type="radio" checked={config.algorithmSelectionMode === 'manual'} onChange={() => setConfig({...config, algorithmSelectionMode: 'manual'})} className="accent-blue-600" />
-                      <span className="text-xs text-slate-700 font-medium">手动选择</span>
-                    </label>
-                  </div>
-                </div>
-
-                {config.algorithmSelectionMode === 'system_recommended' && (
-                  <div className="bg-white p-3 rounded-lg border border-emerald-200 shadow-sm space-y-2">
-                    <div className="flex items-center gap-1.5">
-                      <Settings size={14} className="text-emerald-500" />
-                      <span className="text-xs font-bold text-emerald-800">推荐算法：{getRecommendedAlgorithm(config.compareType, config.detectionTarget)}</span>
-                    </div>
-                    <div className="text-[10px] text-emerald-600/80 leading-relaxed bg-emerald-50/50 p-2 rounded">
-                      系统根据当前任务自动推荐 {getRecommendedAlgorithm(config.compareType, config.detectionTarget)} 算法，适合识别当前数据分布和目标的偏离情况。
-                    </div>
-                  </div>
-                )}
-
-                {config.algorithmSelectionMode === 'manual' && (
-                  <div className="space-y-3">
-                    <label className="block text-[11px] font-bold text-slate-700">请选择算法：</label>
-                    <select 
-                      className="w-full text-xs p-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:border-blue-500 bg-white"
-                      value={config.algorithm}
-                      onChange={(e) => setConfig({...config, algorithm: e.target.value as any})}
-                    >
-                      {config.compareType === 'time_compare' ? (
-                        <>
-                          <option value="gesd">GESD 离群点检测</option>
-                          <option value="zscore">Z-Score 偏离检测</option>
-                          <option value="quantile">分位数检测</option>
-                          <option value="mann_kendall">Mann-Kendall 趋势异常判断</option>
-                          <option value="volatility">波动异常检测</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="gesd">GESD 离群点检测</option>
-                          <option value="zscore">Z-Score 偏离检测</option>
-                          <option value="iqr">IQR 四分位距检测</option>
-                          <option value="quantile">分位数检测</option>
-                          <option value="dispersion">离散度分布检测</option>
-                          <option value="extreme_ratio">极值比例检测</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-                )}
+                  <ChevronDown size={14} className="text-slate-400 group-open:rotate-180 transition-transform" />
+                </summary>
                 
-                {/* Simulated algorithm params block */}
-                <div className="pt-3 border-t border-slate-200">
-                  <div className="text-[11px] font-bold text-slate-700 mb-3 block">算法参数：</div>
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                     <div className="space-y-1">
-                        <label className="text-slate-500 text-[10px] font-bold">检测方向</label>
-                        <select 
-                          className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-medium"
-                          value={config.algorithmParams?.direction || 'both'}
-                          onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, direction: e.target.value as any}})}
-                        >
-                          <option value="both">双向异常</option>
-                          <option value="high">仅偏高</option>
-                          <option value="low">仅偏低</option>
-                        </select>
-                     </div>
-
-                    {(config.algorithmSelectionMode === 'system_recommended' || config.algorithm === 'gesd') && (
-                      <>
-                        <div className="space-y-1">
-                           <label className="text-slate-500 text-[10px] font-bold">alpha (显著性水平)</label>
-                           <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                             value={config.algorithmParams?.alpha || 0.05}
-                             onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, alpha: parseFloat(e.target.value)}})}
-                           />
+                <div className="mt-4 space-y-4">
+                  <div className="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2">请选择本节点使用的异常判断方式：</div>
+                  
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <button 
+                      onClick={() => setConfig({...config, detectionMethodType: 'algorithm'})}
+                      className={cn(
+                        "flex flex-col text-left p-3.5 rounded-xl border-2 transition-all relative overflow-hidden focus:outline-none",
+                        config.detectionMethodType === 'algorithm' ? "border-blue-500 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={cn("w-3 h-3 rounded-full border-2", config.detectionMethodType === 'algorithm' ? "border-blue-500 flex items-center justify-center shadow-sm" : "border-slate-300")}>
+                          {config.detectionMethodType === 'algorithm' && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />}
                         </div>
-                        <div className="space-y-1">
-                           <label className="text-slate-500 text-[10px] font-bold">最大异常比例</label>
-                           <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                             value={config.algorithmParams?.maxAnomalyRatio || 0.1}
-                             onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, maxAnomalyRatio: parseFloat(e.target.value)}})}
-                           />
-                        </div>
-                      </>
-                    )}
-                    {config.algorithmSelectionMode === 'manual' && config.algorithm === 'zscore' && (
-                      <div className="space-y-1">
-                         <label className="text-slate-500 text-[10px] font-bold">Z-Score 阈值</label>
-                         <input type="number" step="0.1" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                           value={config.algorithmParams?.zscoreThreshold || 3.0}
-                           onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, zscoreThreshold: parseFloat(e.target.value)}})}
-                         />
+                        <span className={cn("text-sm font-bold tracking-tight", config.detectionMethodType === 'algorithm' ? "text-blue-900" : "text-slate-700")}>算法检测</span>
                       </div>
-                    )}
-                    {config.algorithmSelectionMode === 'manual' && config.algorithm === 'iqr' && (
-                      <div className="space-y-1">
-                         <label className="text-slate-500 text-[10px] font-bold">IQR 倍数</label>
-                         <input type="number" step="0.1" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                           value={config.algorithmParams?.iqrMultiplier || 1.5}
-                           onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, iqrMultiplier: parseFloat(e.target.value)}})}
-                         />
+                      <div className="text-[10px] text-slate-500 leading-relaxed pl-5 mt-1">基于统计、趋势或波动算法自动识别异常。</div>
+                    </button>
+                    <button 
+                      onClick={() => setConfig({...config, detectionMethodType: 'manual_rule'})}
+                      className={cn(
+                        "flex flex-col text-left p-3.5 rounded-xl border-2 transition-all relative overflow-hidden focus:outline-none",
+                        config.detectionMethodType === 'manual_rule' ? "border-blue-500 bg-blue-50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={cn("w-3 h-3 rounded-full border-2", config.detectionMethodType === 'manual_rule' ? "border-blue-500 flex items-center justify-center shadow-sm" : "border-slate-300")}>
+                          {config.detectionMethodType === 'manual_rule' && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />}
+                        </div>
+                        <span className={cn("text-sm font-bold tracking-tight", config.detectionMethodType === 'manual_rule' ? "text-blue-900" : "text-slate-700")}>人工规则检测</span>
                       </div>
-                    )}
-                    {config.algorithmSelectionMode === 'manual' && config.algorithm === 'quantile' && (
-                      <>
-                        <div className="space-y-1">
-                           <label className="text-slate-500 text-[10px] font-bold">下分位数</label>
-                           <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                             value={config.algorithmParams?.lowerQuantile || 0.05}
-                             onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, lowerQuantile: parseFloat(e.target.value)}})}
-                           />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-slate-500 text-[10px] font-bold">上分位数</label>
-                           <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                             value={config.algorithmParams?.upperQuantile || 0.95}
-                             onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, upperQuantile: parseFloat(e.target.value)}})}
-                           />
-                        </div>
-                      </>
-                    )}
-                    {config.algorithmSelectionMode === 'manual' && config.algorithm === 'mann_kendall' && (
-                      <>
-                        <div className="space-y-1">
-                           <label className="text-slate-500 text-[10px] font-bold">显著性水平</label>
-                           <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                             value={config.algorithmParams?.mkAlpha || 0.05}
-                             onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, mkAlpha: parseFloat(e.target.value)}})}
-                           />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-slate-500 text-[10px] font-bold">趋势窗口</label>
-                           <input type="text" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                             value={config.algorithmParams?.mkWindow || '14d'}
-                             onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, mkWindow: e.target.value}})}
-                           />
-                        </div>
-                      </>
-                    )}
-                    {config.algorithmSelectionMode === 'manual' && config.algorithm === 'volatility' && (
-                      <>
-                        <div className="space-y-1">
-                           <label className="text-slate-500 text-[10px] font-bold">窗口大小</label>
-                           <input type="text" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                             value={config.algorithmParams?.volatilityWindow || '7d'}
-                             onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, volatilityWindow: e.target.value}})}
-                           />
-                        </div>
-                        <div className="space-y-1">
-                           <label className="text-slate-500 text-[10px] font-bold">变化率阈值</label>
-                           <input type="number" step="0.1" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
-                             value={config.algorithmParams?.changeRate || 0.5}
-                             onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, changeRate: parseFloat(e.target.value)}})}
-                           />
-                        </div>
-                      </>
-                    )}
+                      <div className="text-[10px] text-slate-500 leading-relaxed pl-5 mt-1">基于业务条件表达式判断，适合明确阈值。</div>
+                    </button>
                   </div>
-                </div>
-              </div>
-            )}
+
+                  {config.detectionMethodType === 'algorithm' && (
+                    <div className="bg-[#F8FAFC] border border-slate-200 rounded-xl p-4 shadow-inner space-y-4 animate-in fade-in slide-in-from-top-2">
+                      <div className="space-y-3">
+                        <label className="block text-[11px] font-bold text-slate-700">算法选择：</label>
+                        <select 
+                          className="w-full text-xs p-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:border-blue-500 bg-white"
+                          value={config.algorithm}
+                          onChange={(e) => setConfig({...config, algorithm: e.target.value as any})}
+                        >
+                          {config.compareType === 'time_compare' ? (
+                            <>
+                              <option value="gesd">GESD 离群点检测 {getRecommendedAlgorithm(config.compareType, config.detectionTarget).includes('GESD') ? '(系统推荐)' : ''}</option>
+                              <option value="zscore">Z-Score 偏离检测</option>
+                              <option value="quantile">分位数检测</option>
+                              <option value="mann_kendall">Mann-Kendall 趋势异常判断 {config.detectionTarget === 'trend' ? '(系统推荐)' : ''}</option>
+                              <option value="volatility">波动异常检测 {config.detectionTarget === 'volatility' ? '(系统推荐)' : ''}</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value="gesd">GESD 离群点检测 {getRecommendedAlgorithm(config.compareType, config.detectionTarget).includes('GESD') ? '(系统推荐)' : ''}</option>
+                              <option value="zscore">Z-Score 偏离检测</option>
+                              <option value="iqr">IQR 四分位距检测</option>
+                              <option value="quantile">分位数检测</option>
+                              <option value="dispersion">离散度分布检测 {config.detectionTarget === 'distribution' ? '(系统推荐)' : ''}</option>
+                              <option value="extreme_ratio">极值比例检测</option>
+                            </>
+                          )}
+                        </select>
+                      </div>
+                      
+                      {/* Simulated algorithm params block */}
+                      <div className="pt-3 border-t border-slate-200">
+                        <div className="text-[11px] font-bold text-slate-700 mb-3 block">算法参数：</div>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div className="space-y-1">
+                              <label className="text-slate-500 text-[10px] font-bold">检测方向</label>
+                              <select 
+                                className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-medium"
+                                value={config.algorithmParams?.direction || 'both'}
+                                onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, direction: e.target.value as any}})}
+                              >
+                                <option value="both">双向异常</option>
+                                <option value="high">仅偏高</option>
+                                <option value="low">仅偏低</option>
+                              </select>
+                          </div>
+
+                          {config.algorithm === 'gesd' && (
+                            <>
+                              <div className="space-y-1">
+                                <label className="text-slate-500 text-[10px] font-bold">alpha (显著性水平)</label>
+                                <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                  value={config.algorithmParams?.alpha || 0.05}
+                                  onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, alpha: parseFloat(e.target.value)}})}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-slate-500 text-[10px] font-bold">最大异常比例</label>
+                                <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                  value={config.algorithmParams?.maxAnomalyRatio || 0.1}
+                                  onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, maxAnomalyRatio: parseFloat(e.target.value)}})}
+                                />
+                              </div>
+                            </>
+                          )}
+                          {config.algorithm === 'zscore' && (
+                            <div className="space-y-1">
+                              <label className="text-slate-500 text-[10px] font-bold">Z-Score 阈值</label>
+                              <input type="number" step="0.1" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                value={config.algorithmParams?.zscoreThreshold || 3.0}
+                                onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, zscoreThreshold: parseFloat(e.target.value)}})}
+                              />
+                            </div>
+                          )}
+                          {config.algorithm === 'iqr' && (
+                            <div className="space-y-1">
+                              <label className="text-slate-500 text-[10px] font-bold">IQR 倍数</label>
+                              <input type="number" step="0.1" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                value={config.algorithmParams?.iqrMultiplier || 1.5}
+                                onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, iqrMultiplier: parseFloat(e.target.value)}})}
+                              />
+                            </div>
+                          )}
+                          {config.algorithm === 'quantile' && (
+                            <>
+                              <div className="space-y-1">
+                                <label className="text-slate-500 text-[10px] font-bold">下分位数</label>
+                                <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                  value={config.algorithmParams?.lowerQuantile || 0.05}
+                                  onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, lowerQuantile: parseFloat(e.target.value)}})}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-slate-500 text-[10px] font-bold">上分位数</label>
+                                <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                  value={config.algorithmParams?.upperQuantile || 0.95}
+                                  onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, upperQuantile: parseFloat(e.target.value)}})}
+                                />
+                              </div>
+                            </>
+                          )}
+                          {config.algorithm === 'mann_kendall' && (
+                            <>
+                              <div className="space-y-1">
+                                <label className="text-slate-500 text-[10px] font-bold">显著性水平</label>
+                                <input type="number" step="0.01" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                  value={config.algorithmParams?.mkAlpha || 0.05}
+                                  onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, mkAlpha: parseFloat(e.target.value)}})}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-slate-500 text-[10px] font-bold">趋势窗口</label>
+                                <input type="text" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                  value={config.algorithmParams?.mkWindow || '14d'}
+                                  onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, mkWindow: e.target.value}})}
+                                />
+                              </div>
+                            </>
+                          )}
+                          {config.algorithm === 'volatility' && (
+                            <>
+                              <div className="space-y-1">
+                                <label className="text-slate-500 text-[10px] font-bold">窗口大小</label>
+                                <input type="text" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                  value={config.algorithmParams?.volatilityWindow || '7d'}
+                                  onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, volatilityWindow: e.target.value}})}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-slate-500 text-[10px] font-bold">变化率阈值</label>
+                                <input type="number" step="0.1" className="w-full bg-white border border-slate-200 rounded p-1.5 outline-none font-mono"
+                                  value={config.algorithmParams?.changeRate || 0.5}
+                                  onChange={(e) => setConfig({...config, algorithmParams: {...config.algorithmParams, changeRate: parseFloat(e.target.value)}})}
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
             {config.detectionMethodType === 'manual_rule' && (
               <div className="space-y-4 animate-in fade-in duration-300">
@@ -1370,32 +1364,62 @@ export const NodeDrawer = ({ isOpen, onClose, config, setConfig, onTest }: NodeD
                 </div>
               </div>
             )}
+                </div>
+              </details>
+            </div>
           </div>
         </Section>
 
-        {/* Section 5: Output & Branch */}
-        <Section title="四、输出字段与分支规则">
-          <div className="space-y-5 pt-1">
-             <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-xs text-slate-600 space-y-1.5">
-               <div className="font-bold text-slate-800 mb-2">分支规则：</div>
-               <div className="flex items-center gap-2 font-mono text-[10px] bg-white p-1 rounded border border-slate-100"><span className="text-blue-600 font-bold">has_anomaly = true</span> → <span className="text-emerald-600 font-bold bg-emerald-100 px-1.5 py-0.5 rounded">是分支</span></div>
-               <div className="flex items-center gap-2 font-mono text-[10px] bg-white p-1 rounded border border-slate-100"><span className="text-blue-600 font-bold">has_anomaly = false</span> → <span className="text-slate-500 font-bold bg-slate-200 px-1.5 py-0.5 rounded">否分支</span></div>
-             </div>
-
+        {/* Section 4: Output */}
+        <Section title="四、输出字段">
+          <div className="space-y-4 pt-1">
              <div>
                <label className="text-xs font-bold text-slate-700 block mb-2">节点固定输出 structure (只读)：</label>
-               <div className="bg-[#F8FAFC] border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 space-y-2">
-                 <div className="flex justify-between items-center bg-white p-1.5 rounded border border-slate-100">
-                   <span className="font-bold text-slate-800">has_anomaly</span>
-                   <span className="text-slate-400 text-[10px]">布尔值 | 是否有异常</span>
+               
+               <div className="bg-[#F8FAFC] border border-slate-200 rounded-lg p-3 text-xs font-mono text-slate-600 space-y-4">
+                 
+                 <div>
+                   <div className="font-bold text-slate-800 mb-1.5 flex items-center gap-1.5"><Layers size={14} className="text-blue-500" /> summary</div>
+                   <div className="space-y-1.5 pl-3 border-l-2 border-slate-200 ml-1.5">
+                     <div className="flex justify-between items-center bg-white p-1.5 rounded border border-slate-100 shadow-sm">
+                       <span className="font-bold text-slate-800">has_anomaly</span>
+                       <span className="text-slate-400 text-[10px]">boolean | 是否有异常</span>
+                     </div>
+                     <div className="flex justify-between items-center bg-white p-1.5 rounded border border-slate-100 shadow-sm">
+                       <span className="font-bold text-slate-800">anomaly_count</span>
+                       <span className="text-slate-400 text-[10px]">number | 异常点数量</span>
+                     </div>
+                     <div className="flex justify-between items-center bg-white p-1.5 rounded border border-slate-100 shadow-sm">
+                       <span className="font-bold text-slate-800">normal_count</span>
+                       <span className="text-slate-400 text-[10px]">number | 正常点数量</span>
+                     </div>
+                     <div className="flex justify-between items-center bg-white p-1.5 rounded border border-slate-100 shadow-sm">
+                       <span className="font-bold text-slate-800">total_count</span>
+                       <span className="text-slate-400 text-[10px]">number | 全部点数量</span>
+                     </div>
+                   </div>
                  </div>
-                 <div className="flex justify-between items-center bg-white p-1.5 rounded border border-slate-100">
-                   <span className="font-bold text-slate-800">anomaly_count</span>
-                   <span className="text-slate-400 text-[10px]">整数 | 异常点数量</span>
+
+                 <div>
+                   <div className="font-bold text-slate-800 mb-1.5 flex items-center gap-1.5"><Database size={14} className="text-emerald-500" /> details</div>
+                   <div className="space-y-1.5 pl-3 border-l-2 border-slate-200 ml-1.5">
+                     <div className="flex justify-between items-center bg-white p-1.5 rounded border border-slate-100 shadow-sm">
+                       <span className="font-bold text-slate-800">anomaly_items</span>
+                       <span className="text-slate-400 text-[10px]">array | 异常点详情数组</span>
+                     </div>
+                     <div className="flex justify-between items-center bg-white p-1.5 rounded border border-slate-100 shadow-sm">
+                       <span className="font-bold text-slate-800">all_items</span>
+                       <span className="text-slate-400 text-[10px]">array | 全部点详情数组</span>
+                     </div>
+                   </div>
                  </div>
-                 <div className="flex justify-between items-center bg-white p-1.5 rounded border border-slate-100">
-                   <span className="font-bold text-slate-800">normal_count</span>
-                   <span className="text-slate-400 text-[10px]">整数 | 正常点数量</span>
+
+               </div>
+               
+               <div className="mt-3 flex items-start gap-2 bg-blue-50/50 p-2.5 rounded border border-blue-100 text-blue-700 text-[10px] leading-relaxed">
+                 <Info size={14} className="shrink-0 mt-0.5" />
+                 <div>
+                   此节点现在作为纯粹的检测计算节点提供单输出。如果需要根据是否异常执行不同操作，请在画布上连接“逻辑判断”节点。
                  </div>
                </div>
              </div>
@@ -1427,155 +1451,95 @@ export const TestResultPanel = ({ onClose, config }: { onClose: () => void, conf
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors"><X size={20} /></button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50 custom-scrollbar">
           
           {config.compareType === 'homogeneous_compare' && (
-            <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl space-y-2 text-xs font-mono text-slate-600">
+            <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl space-y-2 text-xs font-mono text-slate-600">
               <div className="text-slate-800 font-bold mb-1 sans">测试查询条件 (同类对比):</div>
-              <div className="flex gap-2"><span className="text-slate-400 w-32">同类范围维度字段:</span> <span className="font-bold text-blue-700 bg-white px-1.5 py-0.5 rounded border border-blue-200">{config.targetConfig?.peerDimensionField || 'city_id'}</span></div>
+              <div className="flex gap-2"><span className="text-slate-500 w-32">同类范围维度字段:</span> <span className="font-bold text-blue-700 bg-white px-1.5 py-0.5 rounded border border-blue-200 shadow-sm">{config.targetConfig?.peerDimensionField || 'city_id'}</span></div>
               <div className="flex gap-2">
-                <span className="text-slate-400 w-32">
-                  {config.detectionTarget === 'target_object' ? '对标对象维度取值:' : '对象维度取值:'}
+                <span className="text-slate-500 w-32">
+                  {config.detectionTarget === 'target_object' ? '待测对象维度取值:' : '对象维度取值:'}
                 </span> 
-                <span className="font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-slate-200">{config.targetConfig?.benchmarkDimensionValue || '-'}</span>
+                <span className="font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm">{config.targetConfig?.targetDimensionValue || '-'}</span>
               </div>
-              <div className="flex gap-2"><span className="text-slate-400 w-32">时间范围:</span> <span className="font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-slate-200">{config.targetConfig?.timeDimensionField || 'biz_date'} / {config.targetConfig?.comparisonTimeRange || 'yesterday'}</span></div>
+              <div className="flex gap-2"><span className="text-slate-500 w-32">范围对象取值模式:</span> <span className="font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm">{config.targetConfig?.benchmarkValueMode || 'variable'}</span></div>
             </div>
           )}
 
-          {/* Top Line Stats */}
-          <div className="grid grid-cols-3 gap-3">
-             <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-               <div className="text-xs text-emerald-800 font-bold mb-1">分支走向</div>
-               <div className="text-xl font-black text-emerald-600">是分支</div>
+          <div className="space-y-3">
+             <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+               <Layers size={16} className="text-blue-500" />
+               <h4 className="text-sm font-bold text-slate-800">summary (检测概要)</h4>
              </div>
-             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-               <div className="text-xs text-slate-500 font-bold mb-1">是否有异常</div>
-               <div className="text-xl font-bold font-mono text-slate-700">true</div>
-             </div>
-             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-               <div className="text-xs text-slate-500 font-bold mb-1">异常数量</div>
-               <div className="text-xl font-black text-red-600">3</div>
-             </div>
-          </div>
-
-          {/* Method and Reason */}
-          <div>
-            <h4 className="text-xs font-bold text-slate-700 mb-2 ml-1">判定依据 (method_result)</h4>
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2 font-mono text-slate-600">
-              {config.detectionMethodType === 'algorithm' ? (
-                <>
-                  <div className="flex gap-2"><span className="text-slate-400">检测方法:</span> <span className="font-bold text-slate-800">算法检测 / {config.algorithmSelectionMode === 'system_recommended' ? 'GESD (系统推荐)' : '自定义算法'}</span></div>
-                  <div className="flex gap-2"><span className="text-slate-400">参数依据:</span> <span className="text-blue-700 bg-blue-50 px-1 rounded">alpha = 0.05, 最大异常比例 = 10%</span></div>
-                  <div className="flex gap-2"><span className="text-slate-400">主要结论:</span> <span className="text-slate-700">2026-06-11 销售额低于历史均值38.2%，且低于算法正常下界52000。</span></div>
-                </>
-              ) : (
-                <>
-                  <div className="flex gap-2 text-xs"><span className="text-slate-400">检测方法:</span> <span className="font-bold text-slate-800">人工规则检测 ({config.manualRuleConfig?.ruleGroups?.length || 1} 个规则组)</span></div>
-                  <div className="space-y-3 mt-3 font-sans">
-                    <div className="text-xs font-bold text-rose-700 mb-1 border-b border-dashed border-rose-200 pb-1">命中人工规则组明细:</div>
-                    {(config.manualRuleConfig?.ruleGroups || []).map((grp, gidx) => {
-                      const dirMap: Record<string, string> = { high: '偏高 high', low: '偏低 low', both: '双向 both', custom: '自定义 custom' };
-                      const levelMap: Record<string, string> = { low: '低 low', medium: '中 medium', high: '高 high', critical: '极高 critical' };
-                      return (
-                        <div key={grp.id} className="bg-white border border-rose-200 rounded-xl p-3.5 space-y-2 border-l-[4px] border-l-rose-500 shadow-sm animate-in fade-in duration-200">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-slate-800 text-xs">{grp.name || `规则组 ${gidx + 1}`}</span>
-                            <span className="text-[10px] font-bold bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full border border-rose-200">已命中 HIT</span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-2 text-[11px]">
-                            <div className="flex gap-1.5"><span className="text-slate-400">异常方向:</span> <span className="font-semibold text-slate-700">{dirMap[grp.anomalyDirection] || grp.anomalyDirection}</span></div>
-                            <div className="flex gap-1.5"><span className="text-slate-400">异常级别:</span> <span className="font-bold text-red-600">{levelMap[grp.anomalyLevel] || grp.anomalyLevel}</span></div>
-                          </div>
-
-                          <div className="text-[10px] font-mono text-slate-500 bg-slate-50 p-2 rounded border border-slate-100">
-                            <div className="font-bold text-[9px] text-slate-400 mb-0.5">条件表达式:</div>
-                            {`(${grp.rules.map(r => `${r.field} ${r.operator === '==' ? '=' : r.operator} '${r.value || '空值'}'`).join(` ${grp.logicOperator} `)})`}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+             <div className="grid grid-cols-4 gap-3">
+               <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                 <div className="text-xs text-slate-500 font-bold mb-1">has_anomaly</div>
+                 <div className="text-lg font-bold font-mono text-red-600">true</div>
+               </div>
+               <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                 <div className="text-xs text-slate-500 font-bold mb-1">anomaly_count</div>
+                 <div className="text-lg font-black text-slate-700">2</div>
+               </div>
+               <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                 <div className="text-xs text-slate-500 font-bold mb-1">normal_count</div>
+                 <div className="text-lg font-black font-mono text-slate-700">28</div>
+               </div>
+               <div className="p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                 <div className="text-xs text-slate-500 font-bold mb-1">total_count</div>
+                 <div className="text-lg font-black font-mono text-slate-700">30</div>
+               </div>
             </div>
           </div>
 
-          {/* Details Table */}
-          {(() => {
-            const getDimensionValueDisplay = (idx: number) => {
-              if (config.compareType === 'homogeneous_compare') {
-                const peerField = config.targetConfig?.peerDimensionField || 'city_id';
-                return idx === 0 ? `上海市 (${peerField})` : `北京市 (${peerField})`;
-              } else {
-                if (!config.queryConditions || config.queryConditions.length === 0) {
-                  return '无维度值';
-                }
-                return config.queryConditions.map(c => `${c.field}: ${c.value || '空'}`).join(' / ');
-              }
-            };
-
-            const getDimensionHeader = () => {
-              if (config.compareType === 'homogeneous_compare') {
-                return `对比维度 (${config.targetConfig?.peerDimensionField || 'city_id'})`;
-              } else {
-                const fields = Array.from(new Set(config.queryConditions?.map(c => c.field).filter(Boolean)));
-                return `条件维度 (${fields.join('/') || '未配置'})`;
-              }
-            };
-
-            const showDimensionColumn = config.compareType === 'homogeneous_compare' || (config.queryConditions && config.queryConditions.length > 0);
-
-            return (
-              <div>
-                 <h4 className="text-xs font-bold text-slate-700 mb-2 ml-1 flex items-center justify-between">
-                   <span>异常明细 (anomaly_items)</span>
-                   <span className="text-[10px] text-slate-400 font-normal">维度取值已实现动态化字段关联</span>
-                 </h4>
-                 <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
-                  <table className="w-full text-xs text-left whitespace-nowrap min-w-max">
-                    <thead className="bg-[#F8FAFC] text-slate-500 font-bold border-b border-slate-200">
-                      <tr>
-                        {showDimensionColumn && <th className="px-4 py-3">{getDimensionHeader()}</th>}
-                        <th className="px-4 py-3">时间点</th>
-                        <th className="px-4 py-3 text-right">实际检测值</th>
-                        <th className="px-4 py-3 text-right">预期范围</th>
-                        <th className="px-4 py-3 text-right">偏离程度</th>
-                        <th className="px-4 py-3">判断依据</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        {showDimensionColumn && (
-                          <td className="px-4 py-3 font-medium text-slate-900 border-l-[3px] border-l-red-500">
-                            {getDimensionValueDisplay(0)}
-                          </td>
-                        )}
-                        <td className={cn("px-4 py-3 font-medium text-slate-900", !showDimensionColumn && "border-l-[3px] border-l-red-500")}>2026-06-11</td>
-                        <td className="px-4 py-3 text-right font-mono font-bold">42,000</td>
-                        <td className="px-4 py-3 text-right font-mono text-slate-400">[52000, 84000]</td>
-                        <td className="px-4 py-3 text-right"><span className="text-red-600 bg-red-50 px-1.5 py-0.5 rounded font-bold">-38.2%</span></td>
-                        <td className="px-4 py-3 text-slate-500 truncate max-w-[200px]" title="低于均值38.2%">低出预期下界</td>
-                      </tr>
-                      <tr className="hover:bg-slate-50 transition-colors">
-                        {showDimensionColumn && (
-                          <td className="px-4 py-3 font-medium text-slate-900 border-l-[3px] border-l-orange-500">
-                            {getDimensionValueDisplay(1)}
-                          </td>
-                        )}
-                        <td className={cn("px-4 py-3 font-medium text-slate-900", !showDimensionColumn && "border-l-[3px] border-l-orange-500")}>2026-06-08</td>
-                        <td className="px-4 py-3 text-right font-mono font-bold">98,000</td>
-                        <td className="px-4 py-3 text-right font-mono text-slate-400">[52000, 84000]</td>
-                        <td className="px-4 py-3 text-right"><span className="text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded font-bold">+16.6%</span></td>
-                        <td className="px-4 py-3 text-slate-500 truncate max-w-[200px]" title="高于P90">高于正常上界</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                 </div>
-              </div>
-            );
-          })()}
+          <div className="space-y-3">
+             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+               <div className="flex items-center gap-2">
+                 <Database size={16} className="text-emerald-500" />
+                 <h4 className="text-sm font-bold text-slate-800">details.anomaly_items (选看单条异常模型)</h4>
+               </div>
+             </div>
+             
+             <div className="bg-[#1E293B] rounded-xl p-4 overflow-x-auto shadow-inner text-[11px] font-mono leading-relaxed text-slate-300">
+             <pre>{JSON.stringify([
+               {
+                 "point_id": "2026-06-11",
+                 "metric_value": 42000,
+                 "baseline_value": 68000,
+                 "deviation": -0.382,
+                 "detection_direction": config.algorithmParams?.direction || "both",
+                 "anomaly_direction": "low",
+                 "is_anomaly": true,
+                 "method_type": config.detectionMethodType,
+                 "method_name": config.algorithm || "gesd",
+                 "algorithm_params": config.detectionMethodType === 'algorithm' ? {
+                    "alpha": config.algorithmParams?.alpha || 0.05,
+                    "maxAnomalyRatio": config.algorithmParams?.maxAnomalyRatio || 0.1
+                 } : null,
+                 "rule_params": config.detectionMethodType === 'manual_rule' ? config.manualRuleConfig : null,
+                 "dimension_values": {
+                    [config.targetConfig?.peerDimensionField || 'city_id']: "上海市"
+                 },
+                 "variables": {
+                    "total_sales": 42000,
+                    "avg_sales": 68000
+                 },
+                 "evidence": "检测值 42000 低于正常下界 52000, 偏离度 -38.2%"
+               }
+             ], null, 2)}</pre>
+             </div>
+          </div>
+          
+          <div className="space-y-3">
+             <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+               <Database size={16} className="text-slate-500" />
+               <h4 className="text-sm font-bold text-slate-800">details.all_items (完整数组)</h4>
+             </div>
+             <div className="bg-slate-100 rounded-xl p-4 text-[11px] font-mono text-slate-500 border border-slate-200 border-dashed">
+               <div className="italic">// Array({30}) - 包含上述 2 条异常点和 28 条正常点的完整上下文，结构同上。</div>
+               <div>[ ... ]</div>
+             </div>
+          </div>
 
         </div>
 
