@@ -879,7 +879,7 @@ export const NodeDrawer = ({ isOpen, onClose, config, setConfig, onTest }: NodeD
           {/* Section 4 Advanced Config inside Task */}
           <div className="pt-6 border-t border-slate-100">
               <details className="group">
-                <summary className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center justify-between cursor-pointer list-none flex-row-reverse w-full">
+                <summary className="text-[11px] font-bold text-slate-500 uppercase tracking-widest flex items-center justify-between cursor-pointer list-none w-full">
                   <div className="flex items-center gap-2">
                     <span className="w-4 h-4 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px]">4</span> 
                     高级配置：检测方法
