@@ -819,30 +819,17 @@ export const NodeDrawer = ({ isOpen, onClose, config, setConfig, onTest }: NodeD
                     
                     {/* 4. 范围对象是否包含待检测对象 (Only for target_object) */}
                     {config.detectionTarget === 'target_object' && (
-                       <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                         <label className="text-xs font-bold text-slate-700 block mb-2">范围对象是否包含待检测对象</label>
-                         <div className="flex gap-4">
-                           <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-                             <input 
-                               type="radio" 
-                               name="includeTarget" 
-                               className="accent-blue-600"
-                               checked={config.targetConfig?.includeTargetInBenchmark === true}
-                               onChange={() => setConfig({...config, targetConfig: {...config.targetConfig, includeTargetInBenchmark: true}})}
-                             />
-                             <span>包含待检测对象</span>
-                           </label>
-                           <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
-                             <input 
-                               type="radio" 
-                               name="includeTarget" 
-                               className="accent-blue-600"
-                               checked={config.targetConfig?.includeTargetInBenchmark !== true}
-                               onChange={() => setConfig({...config, targetConfig: {...config.targetConfig, includeTargetInBenchmark: false}})}
-                             />
-                             <span>排除待检测对象</span>
-                           </label>
-                         </div>
+                       <div className="pt-3 border-t border-slate-100 mt-2">
+                         <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                           <input 
+                             type="checkbox" 
+                             className="accent-blue-600 w-3.5 h-3.5 rounded border-slate-300"
+                             checked={config.targetConfig?.includeTargetInBenchmark !== true}
+                             onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, includeTargetInBenchmark: !e.target.checked}})}
+                           />
+                           <span>从范围对象中排除待检测对象</span>
+                         </label>
+                         <div className="text-[10px] text-slate-500 pl-5.5 mt-1 ml-0.5">勾选后，当前对象将不参与同类集合的基准计算。</div>
                        </div>
                     )}
                     
