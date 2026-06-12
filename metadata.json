@@ -1,0 +1,6 @@
+{
+  "name": "指标异常检测配置中心",
+  "description": "流程画布中的指标异常检测节点配置原型，支持点检测、数组识别、序列趋势及波动检测等多种任务模式。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
