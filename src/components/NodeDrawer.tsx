@@ -665,7 +665,7 @@ export const NodeDrawer = ({ isOpen, onClose, config, setConfig, onTest }: NodeD
                            <label className="flex items-center gap-2 cursor-pointer select-none">
                              <input 
                                type="checkbox" 
-                               checked={config.targetConfig?.excludeTargetPoint || false}
+                               checked={config.targetConfig?.excludeTargetPoint !== false}
                                className="accent-blue-600 rounded w-3.5 h-3.5"
                                onChange={(e) => {
                                  setConfig({
@@ -819,17 +819,17 @@ export const NodeDrawer = ({ isOpen, onClose, config, setConfig, onTest }: NodeD
                     
                     {/* 4. 范围对象是否包含待检测对象 (Only for target_object) */}
                     {config.detectionTarget === 'target_object' && (
-                       <div className="pt-3 border-t border-slate-100 mt-2">
-                         <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                       <div className="pt-2 border-t border-slate-100 flex items-center justify-between mt-2">
+                         <label className="flex items-center gap-2 cursor-pointer select-none">
                            <input 
                              type="checkbox" 
-                             className="accent-blue-600 w-3.5 h-3.5 rounded border-slate-300"
+                             className="accent-blue-600 rounded w-3.5 h-3.5"
                              checked={config.targetConfig?.includeTargetInBenchmark !== true}
                              onChange={(e) => setConfig({...config, targetConfig: {...config.targetConfig, includeTargetInBenchmark: !e.target.checked}})}
                            />
-                           <span>从范围对象中排除待检测对象</span>
+                           <span className="text-[11px] text-slate-600 font-bold">移除待检测对象</span>
                          </label>
-                         <div className="text-[10px] text-slate-500 pl-5.5 mt-1 ml-0.5">勾选后，当前对象将不参与同类集合的基准计算。</div>
+                         <span className="text-[9px] text-slate-400 font-medium">在对标集合内排除</span>
                        </div>
                     )}
                     
